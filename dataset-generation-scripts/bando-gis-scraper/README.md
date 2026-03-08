@@ -1,64 +1,127 @@
-# GIS Scraper
+  # GIS Scraper
 
-Scrape GIS data from sapnhan.bando.com.vn. Automation script created with [Playwright](https://playwright.dev).
+  Scrape GIS data from sapnhan.bando.com.vn. Automation script created with [Playwright](https://playwright.dev).
 
-It simulates clicks on every province and ward row data, and captures HTTP requests to dump to JSON files.
+  It simulates clicks on every province and ward row data, and captures HTTP requests to dump to JSON files.
 
-## Features
+  ## Features
 
-- **Automatic GIS Data Capture**: Captures GIS server responses for all provinces and wards
-- **Exhaustive Retry Mechanism**: Automatically retries up to 20 times per item if GIS response is not captured
-- **Failed Item Tracking**: Tracks and reports all items that failed to capture GIS data after retries
-- **Progress Logging**: Real-time logging of retry attempts and success/failure status
-- **Tabulator Virtual Scrolling**: Handles virtual scrolling tables efficiently
+  - **Automatic GIS Data Capture**: Captures GIS server responses for all provinces and wards
+  - **Flexible Province Selection**: Scrape all provinces or a single province to prevent crashes from long-running sessions
+  - **Exhaustive Retry Mechanism**: Automatically retries up to 20 times per item if GIS response is not captured
+  - **Failed Item Tracking**: Tracks and reports all items that failed to capture GIS data after retries
+  - **Progress Logging**: Real-time logging of retry attempts and success/failure status
+  - **Tabulator Virtual Scrolling**: Handles virtual scrolling tables efficiently
 
-## How to run
+  ## How to run
 
-Install Node.js and Playwright on your system.
+  Install Node.js and Playwright on your system.
 
-Install dependencies:
-```bash
-yarn install
-```
+  Install dependencies:
+  ```bash
+  yarn install
+  ```
 
-### Running with Browser UI (Default)
+  ### Running with Browser UI (Default)
 
-By default, the scraper runs with browser UI visible (non-headless mode):
+  By default, the scraper runs with browser UI visible (non-headless mode):
 
-```bash
-yarn dev
-# or
-yarn dev:non-headless
-```
+  ```bash
+  yarn dev
+  # or
+  yarn dev:non-headless
+  ```
 
-### Running in Headless Mode (for VPS/CI)
+  ### Running in Headless Mode (for VPS/CI)
 
-For running on a VPS or in environments without a display, use headless mode:
+  For running on a VPS or in environments without a display, use headless mode:
 
-```bash
-yarn dev:headless
-```
+  ```bash
+  yarn dev:headless
+  ```
 
-This will run the scraper without displaying the browser window, which is ideal for:
-- VPS environments
-- CI/CD pipelines
-- Scheduled tasks
-- Resource-constrained environments
+  This will run the scraper without displaying the browser window, which is ideal for:
+  - VPS environments
+  - CI/CD pipelines
+  - Scheduled tasks
+  - Resource-constrained environments
 
-### Configuration
+  ### Configuration
 
-The headless mode can be configured via environment variables:
+  #### Headless Mode
 
-1. **Using `.env` file** (recommended):
-   ```bash
-   cp .env.example .env
-   # Edit .env and set HEADLESS=true
-   ```
+  The headless mode can be configured via environment variables:
 
-2. **Setting directly via command line**:
-   ```bash
-   HEADLESS=true yarn dev
-   ```
+  1. **Using `.env` file** (recommended):
+     ```bash
+     cp .env.example .env
+     # Edit .env and set HEADLESS=true
+     ```
+
+  2. **Setting directly via command line**:
+     ```bash
+     HEADLESS=true yarn dev
+     ```
+
+  #### Target Province Index (Optional)
+
+  By default, the scraper scrapes **all provinces**. You can specify a single province to scrape using the `TARGET_PROVINCE_INDEX` environment variable to prevent crashes from long-running sessions.
+
+  **Province Indexing**:
+  - Uses one-based indexing (1 = first province, 2 = second province, etc.)
+  - The valid range is dynamic and depends on the actual number of provinces on the website
+  - Typical range: 1 to 34 (as shown on the website)
+  - Default behavior: Scrape all provinces (if not set)
+
+  **Configuration Examples**:
+
+  1. **Using `.env` file** (recommended):
+     ```bash
+     cp .env.example .env
+     # To scrape all provinces (default):
+     # Leave TARGET_PROVINCE_INDEX commented out
+     # 
+     # To scrape a specific province:
+     TARGET_PROVINCE_INDEX=1  # Scrapes the first province
+     TARGET_PROVINCE_INDEX=5  # Scrapes the fifth province
+     ```
+
+  2. **Setting directly via command line**:
+     ```bash
+     # Scrape all provinces (default)
+     yarn dev
+     
+     # Scrape specific province
+     TARGET_PROVINCE_INDEX=1 yarn dev
+     TARGET_PROVINCE_INDEX=5 yarn dev
+     ```
+
+  **Validation**:
+  - If you set an invalid index (e.g., 0, negative, or beyond the total number of provinces), scraper will display an error with the valid range
+  - If you set an out-of-range index (e.g., 100), error message will show the actual number of provinces available
+  - This helps you discover the correct range without guessing
+
+  **Output Files**:
+  Files are written **incrementally** as each province is scraped, allowing you to preserve data and set resume points.
+
+  When targeting a single province (e.g., `TARGET_PROVINCE_INDEX=5`):
+  - `province_5_provinces.json` - Province data (written immediately after scraping)
+  - `province_5_wards.json` - Ward data (written immediately after scraping)
+  - `province_5_complete_result.json` - Complete result for this province
+
+  When scraping all provinces (no `TARGET_PROVINCE_INDEX` set):
+  - `province_1_provinces.json` - Province 1 data (written immediately)
+  - `province_1_wards.json` - Province 1 wards (written immediately)
+  - `province_2_provinces.json` - Province 2 data (written immediately)
+  - `province_2_wards.json` - Province 2 wards (written immediately)
+  - ... (one pair of files per province, written as each province completes)
+  - `complete_result.json` - Complete result with all provinces and wards combined (written at the end)
+
+  **Benefits of Incremental Writing:**
+  - Data is preserved even if scraping crashes
+  - You can resume from any province by setting `TARGET_PROVINCE_INDEX`
+  - Progress is visible in real-time as files appear in the output directory
+  - No risk of losing all data if process fails near the end
 
 Available yarn scripts:
 - `yarn dev` - Run with default settings (reads from .env)
@@ -73,10 +136,12 @@ For production/compiled versions:
 
 ## Output
 
-JSON output files are generated in the `./output/` directory:
-- `provinces.json` - All provinces with GIS data
-- `wards.json` - All wards with GIS data
-- `complete_result.json` - Complete scraping result including failed items
+JSON output files are generated in `./output/` directory:
+- `province_N_provinces.json` - Individual province data (N = province index)
+- `province_N_wards.json` - Individual province wards (N = province index)
+- `complete_result.json` - Complete scraping result including all provinces, wards, and failed items
+
+Files are written incrementally as each province completes, ensuring data preservation.
 
 ## Retry Mechanism
 
