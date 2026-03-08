@@ -1,4 +1,4 @@
-  export const SCRAPER_CONFIG = {
+export const SCRAPER_CONFIG = {
     BASE_URL: 'https://sapnhap.bando.com.vn/',
     SELECTORS: {
       PROVINCE_TABLE: '#bangtinh .tabulator-table[role="rowgroup"]',
@@ -45,4 +45,16 @@ export const BROWSER_OPTIONS = {
     '--no-zygote',
     '--disable-gpu'
   ]
+};
+
+/**
+ * Parallel scraping configuration
+ * PARALLEL: Enable/disable parallel scraping mode
+ * WORKER_COUNT: Number of concurrent workers (default: 4)
+ * MAX_RETRIES: Maximum retry attempts for failed provinces (default: 2)
+ */
+export const PARALLEL_CONFIG = {
+  enabled: process.env.PARALLEL === 'true',
+  workerCount: parseInt(process.env.WORKER_COUNT || '4', 10),
+  maxRetries: parseInt(process.env.MAX_RETRIES || '2', 10)
 };
