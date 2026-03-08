@@ -19,8 +19,7 @@
     ] // Include Node.js types
   },
   "include": [
-    "src/**/*",
-    "tests/**/*.spec.ts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

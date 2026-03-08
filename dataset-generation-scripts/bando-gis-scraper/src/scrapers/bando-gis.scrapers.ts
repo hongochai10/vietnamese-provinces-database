@@ -5,8 +5,27 @@ import { SCRAPER_CONFIG } from "../config";
 import { Locator } from "@playwright/test";
 import { APIInterceptedRequest, ResponseType, ScrapingResult } from "../interfaces";
 
-export class BandoGISScraper extends BaseScraper {
-  async scrapeAll(): Promise<ScrapingResult> {
+  export class BandoGISScraper extends BaseScraper {
+  /**
+   * Validate that the province index is within valid range
+   * @param index The province index to validate (one-based)
+   * @param totalProvinces The total number of available provinces
+   * @throws Error if the index is out of range
+   */
+  private validateProvinceIndex(index: number, totalProvinces: number): void {
+    if (!Number.isInteger(index) || index < 1) {
+      throw new Error(`Invalid province index: ${index}. Index must be a positive integer (1 or greater)`);
+    }
+    
+    if (index > totalProvinces) {
+      throw new Error(
+        `Province index ${index} is out of range. Valid range is 1 to ${totalProvinces}. ` +
+        `Please set TARGET_PROVINCE_INDEX to a value between 1 and ${totalProvinces}.`
+      );
+    }
+  }
+
+  async scrapeAll(provinceIndex?: number, onProvinceScraped?: (province: ProvinceData, wards: WardData[]) => Promise<void>): Promise<ScrapingResult> {
     const result: ScrapingResult = {
       provinces: [],
       wards: [],
@@ -20,7 +39,24 @@ export class BandoGISScraper extends BaseScraper {
     this.apiInterceptorService.clearInterceptedData(ResponseType.PROVINCE_GIS);
     this.apiInterceptorService.clearInterceptedData(ResponseType.WARD_GIS);
 
-    for (let i = 0; i < provinces.length; i++) {
+    // Determine the range of provinces to process
+    let startIndex = 0;
+    let endIndex = provinces.length;
+    
+    if (provinceIndex !== undefined) {
+      // Validate the province index
+      this.validateProvinceIndex(provinceIndex, provinces.length);
+      
+      // Process only the specified province (convert to zero-based index)
+      startIndex = provinceIndex - 1;
+      endIndex = provinceIndex;
+      
+      console.log(`🎯 Targeting province ${provinceIndex}/${provinces.length}: ${provinces[startIndex].ten}`);
+    } else {
+      console.log(`📋 Processing all ${provinces.length} provinces`);
+    }
+
+    for (let i = startIndex; i < endIndex; i++) {
       const province = provinces[i];
       console.log(`Processing province ${i + 1}/${provinces.length}: ${province.ten}`);
 
@@ -52,6 +88,11 @@ export class BandoGISScraper extends BaseScraper {
             console.error(errorMsg);
             result.errors.push(errorMsg);
           }
+        }
+        
+        // Call callback after scraping province and all its wards
+        if (onProvinceScraped) {
+          await onProvinceScraped(province, wards);
         }
       } catch (error) {
         const errorMsg = `Error scraping province ${province.ten}: ${error}`;
