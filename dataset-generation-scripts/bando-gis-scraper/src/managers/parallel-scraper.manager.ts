@@ -244,7 +244,7 @@ export class SimpleParallelScraperManager {
       startTime: new Date(),
       errors: []
     };
-    this.totalProvinces = 63;
+    this.totalProvinces = 34; // Total number of provinces in Vietnam
     this.startTime = new Date();
   }
 
