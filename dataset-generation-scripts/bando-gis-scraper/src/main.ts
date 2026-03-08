@@ -53,7 +53,8 @@ async function runParallelScraping() {
 
     // Define callback for incremental file writing
     const onProvinceScraped = async (province: ProvinceData, wards: WardData[]) => {
-      const provIndex = scrapedProvincesCount + 1;
+      // Use actual province index from stt field (not counter, since parallel completes in random order)
+      const provIndex = parseInt(province.stt, 10);
       const provincesFilename = `province_${provIndex}_provinces.json`;
       const wardsFilename = `province_${provIndex}_wards.json`;
       
@@ -149,6 +150,7 @@ async function runSequentialScraping() {
 
     // Define callback for incremental file writing
     const onProvinceScraped = async (province: ProvinceData, wards: WardData[]) => {
+      // In sequential mode, counter matches province index since they process in order
       const provIndex = scrapedProvincesCount + 1;
       const provincesFilename = `province_${provIndex}_provinces.json`;
       const wardsFilename = `province_${provIndex}_wards.json`;

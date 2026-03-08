@@ -34,7 +34,7 @@ export class ParallelScraperManager {
     };
     this.provinceQueue = [];
     this.completedProvinces = 0;
-    this.totalProvinces = 63; // Total number of provinces in Vietnam
+    this.totalProvinces = 34; // Total number of provinces in Vietnam
     this.startTime = new Date();
   }
 
